@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eBPF Bandwidth Tracker</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔍 eBPF Per-Process Bandwidth Tracker</h1>
+            <p class="subtitle">Real-time network usage monitoring with eBPF</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Time Window:</label>
+                <select id="timeWindow">
+                    <option value="1">Last Hour</option>
+                    <option value="6">Last 6 Hours</option>
+                    <option value="24">Last 24 Hours</option>
+                    <option value="168">Last Week</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Auto Refresh:</label>
+                <input type="checkbox" id="autoRefresh" checked>
+                <span id="refreshTimer">5s</span>
+            </div>
+            <button id="refreshBtn" class="btn btn-primary">🔄 Refresh Now</button>
+        </div>
+
+        <div class="summary-cards">
+            <div class="card">
+                <div class="card-icon">📊</div>
+                <div class="card-content">
+                    <div class="card-value" id="totalBandwidth">0 B</div>
+                    <div class="card-label">Total Bandwidth</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">⬆️</div>
+                <div class="card-content">
+                    <div class="card-value" id="totalTx">0 B</div>
+                    <div class="card-label">Total Upload</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">⬇️</div>
+                <div class="card-content">
+                    <div class="card-value" id="totalRx">0 B</div>
+                    <div class="card-label">Total Download</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-icon">📱</div>
+                <div class="card-content">
+                    <div class="card-value" id="processCount">0</div>
+                    <div class="card-label">Active Processes</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="current">Real-time</button>
+            <button class="tab" data-tab="history">History</button>
+            <button class="tab" data-tab="protocol">Protocols</button>
+            <button class="tab" data-tab="ips">Remote IPs</button>
+            <button class="tab" data-tab="charts">Charts</button>
+        </div>
+
+        <!-- Real-time Tab -->
+        <div id="current" class="tab-content active">
+            <h2>Current Bandwidth Usage</h2>
+            <div class="search-box">
+                <input type="text" id="searchProcess" placeholder="🔍 Filter by process name...">
+            </div>
+            <div class="table-container">
+                <table id="currentTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>PID</th>
+                            <th>Process</th>
+                            <th>Upload (TX)</th>
+                            <th>Download (RX)</th>
+                            <th>Total</th>
+                            <th>TCP TX</th>
+                            <th>TCP RX</th>
+                            <th>UDP TX</th>
+                            <th>UDP RX</th>
+                        </tr>
+                    </thead>
+                    <tbody id="currentTableBody">
+                        <tr>
+                            <td colspan="10" class="loading">Loading data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history" class="tab-content">
+            <h2>Top Processes (Historical)</h2>
+            <div class="table-container">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Process</th>
+                            <th>Upload (TX)</th>
+                            <th>Download (RX)</th>
+                            <th>Total Bandwidth</th>
+                            <th>Records</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">Loading data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Protocol Tab -->
+        <div id="protocol" class="tab-content">
+            <h2>Protocol Breakdown</h2>
+            <div class="protocol-cards" id="protocolCards">
+                <div class="loading">Loading data...</div>
+            </div>
+        </div>
+
+        <!-- IPs Tab -->
+        <div id="ips" class="tab-content">
+            <h2>Remote IP Breakdown</h2>
+            <div class="search-box">
+                <input type="text" id="filterIpProcess" placeholder="Filter by process name (optional)">
+                <button id="filterIpBtn" class="btn btn-secondary">Filter</button>
+            </div>
+            <div class="table-container">
+                <table id="ipTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Remote IP</th>
+                            <th>Process</th>
+                            <th>Upload (TX)</th>
+                            <th>Download (RX)</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ipTableBody">
+                        <tr>
+                            <td colspan="6" class="loading">Loading data...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Charts Tab -->
+        <div id="charts" class="tab-content">
+            <h2>Bandwidth Over Time</h2>
+            <div class="chart-container">
+                <canvas id="bandwidthChart"></canvas>
+            </div>
+            <div class="chart-controls">
+                <label>Process Filter:</label>
+                <input type="text" id="chartProcessFilter" placeholder="Leave empty for all processes">
+                <button id="updateChartBtn" class="btn btn-primary">Update Chart</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>Last updated: <span id="lastUpdate">Never</span></p>
+            <p class="footer-info">Built with eBPF, BCC, Python & Flask</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

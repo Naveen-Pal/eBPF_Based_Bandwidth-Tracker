@@ -1,0 +1,22 @@
+[Unit]
+Description=eBPF Per-Process Bandwidth Tracker
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ebpf-bandwidth-tracker
+ExecStart=/usr/bin/python3 /opt/ebpf-bandwidth-tracker/ebpf_tracker.py --web --db /var/lib/ebpf-tracker/bandwidth.db
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+CapabilityBoundingSet=CAP_SYS_ADMIN CAP_BPF CAP_NET_ADMIN
+AmbientCapabilities=CAP_SYS_ADMIN CAP_BPF CAP_NET_ADMIN
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
