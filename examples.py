@@ -3,8 +3,8 @@ Example script demonstrating how to use the bandwidth tracker programmatically
 """
 
 from storage import BandwidthStorage
-from datetime import datetime, timedelta
-import time
+from datetime import datetime
+import os
 
 
 def example_query_api():
@@ -117,46 +117,6 @@ def example_ip_analysis():
     
     storage.close()
 
-
-def example_custom_query():
-    """Example: Custom SQL query"""
-    print("\n" + "="*60)
-    print("Example: Custom SQL Query")
-    print("="*60)
-    
-    storage = BandwidthStorage("bandwidth.db")
-    
-    # Custom query: Find processes with high TX/RX ratio
-    print("\nProcesses with high upload ratio (TX > 2 * RX):")
-    print("-" * 60)
-    
-    storage.cursor.execute("""
-        SELECT 
-            process_name,
-            SUM(tx_bytes) as total_tx,
-            SUM(rx_bytes) as total_rx,
-            CAST(SUM(tx_bytes) AS FLOAT) / NULLIF(SUM(rx_bytes), 0) as ratio
-        FROM bandwidth_records
-        WHERE timestamp >= datetime('now', '-1 hour')
-        GROUP BY process_name
-        HAVING total_tx > 2 * total_rx
-        ORDER BY ratio DESC
-        LIMIT 10
-    """)
-    
-    results = storage.cursor.fetchall()
-    for row in results:
-        print(f"  {row['process_name']:20s} - "
-              f"Ratio: {row['ratio']:.2f}, "
-              f"TX: {row['total_tx']:,}, "
-              f"RX: {row['total_rx']:,}")
-    
-    if not results:
-        print("  No processes match the criteria")
-    
-    storage.close()
-
-
 def example_export_data():
     """Example: Export data to JSON"""
     print("\n" + "="*60)
@@ -202,7 +162,6 @@ def main():
         example_query_api()
         example_monitor_process()
         example_ip_analysis()
-        example_custom_query()
         example_export_data()
         
         print("\n" + "="*60)
