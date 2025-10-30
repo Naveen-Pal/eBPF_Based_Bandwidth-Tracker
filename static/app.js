@@ -56,6 +56,9 @@ function initializeControls() {
     const searchProcess = document.getElementById('searchProcess');
     const filterIpBtn = document.getElementById('filterIpBtn');
     const updateChartBtn = document.getElementById('updateChartBtn');
+    const chartProcessFilter = document.getElementById('chartProcessFilter');
+    // const chartTimeRange = document.getElementById('chartTimeRange');
+    const chartInterval = document.getElementById('chartInterval');
     
     refreshBtn.addEventListener('click', () => refreshAllData());
     
@@ -80,6 +83,19 @@ function initializeControls() {
     if (updateChartBtn) {
         updateChartBtn.addEventListener('click', () => loadBandwidthChart());
     }
+    
+    // Auto-update chart when selections change
+    if (chartProcessFilter) {
+        chartProcessFilter.addEventListener('change', () => loadBandwidthChart());
+    }
+    
+    // if (chartTimeRange) {
+    //     chartTimeRange.addEventListener('change', () => loadBandwidthChart());
+    // }
+    
+    if (chartInterval) {
+        chartInterval.addEventListener('change', () => loadBandwidthChart());
+    }
 }
 
 // Load data based on active tab
@@ -98,6 +114,7 @@ function loadTabData(tabName) {
             loadIpBreakdown();
             break;
         case 'charts':
+            loadProcessList();  // Load process list first
             loadBandwidthChart();
             break;
     }
@@ -299,7 +316,6 @@ function renderIpTable(ips) {
         <tr>
             <td>${idx + 1}</td>
             <td><strong>${ip.remote_ip}</strong></td>
-            <td>${ip.process_name}</td>
             <td>${ip.total_tx_formatted}</td>
             <td>${ip.total_rx_formatted}</td>
             <td><strong>${ip.total_formatted}</strong></td>
@@ -307,12 +323,50 @@ function renderIpTable(ips) {
     `).join('');
 }
 
+// Load process list for chart dropdown
+async function loadProcessList() {
+    const hours = document.getElementById('timeWindow')?.value || 1;
+    
+    try {
+        const response = await fetch(`${API_BASE}/processes?hours=${hours}`);
+        const data = await response.json();
+        
+        if (data.error) {
+            console.error('Error:', data.error);
+            return;
+        }
+        
+        const select = document.getElementById('chartProcessFilter');
+        const currentValue = select.value;
+        
+        // Clear existing options except "All Processes"
+        select.innerHTML = '<option value="">All Processes (Combined)</option>';
+        
+        // Add process options
+        data.processes.forEach(proc => {
+            const option = document.createElement('option');
+            option.value = proc;
+            option.textContent = proc;
+            select.appendChild(option);
+        });
+        
+        // Restore previous selection if it still exists
+        if (currentValue) {
+            select.value = currentValue;
+        }
+        
+    } catch (error) {
+        console.error('Failed to load process list:', error);
+    }
+}
+
 // Load bandwidth chart
 async function loadBandwidthChart() {
-    const hours = document.getElementById('timeWindow').value;
-    const processFilter = document.getElementById('chartProcessFilter').value;
+    const hours = document.getElementById('timeWindow')?.value || 1;
+    const interval = document.getElementById('chartInterval')?.value || 1;
+    const processFilter = document.getElementById('chartProcessFilter')?.value || '';
     
-    let url = `${API_BASE}/timeseries?hours=${hours}&interval=5`;
+    let url = `${API_BASE}/timeseries?hours=${hours}&interval=${interval}`;
     if (processFilter) {
         url += `&process=${encodeURIComponent(processFilter)}`;
     }
@@ -326,7 +380,7 @@ async function loadBandwidthChart() {
             return;
         }
         
-        renderBandwidthChart(data.data);
+        renderBandwidthChart(data.data, data.process_name);
         
     } catch (error) {
         console.error('Failed to load chart data:', error);
@@ -334,18 +388,45 @@ async function loadBandwidthChart() {
 }
 
 // Render bandwidth chart
-function renderBandwidthChart(data) {
+function renderBandwidthChart(data, processName) {
     const ctx = document.getElementById('bandwidthChart');
     
     if (!data || data.length === 0) {
+        if (bandwidthChart) {
+            bandwidthChart.destroy();
+            bandwidthChart = null;
+        }
         ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+        
+        // Update chart info
+        document.getElementById('chartProcessName').textContent = processName || 'No Data';
+        document.getElementById('chartPeakTx').textContent = '0 B/s';
+        document.getElementById('chartPeakRx').textContent = '0 B/s';
+        document.getElementById('chartAvgTx').textContent = '0 B/s';
+        document.getElementById('chartAvgRx').textContent = '0 B/s';
         return;
     }
     
     // Prepare data
-    const labels = data.map(d => new Date(d.timestamp).toLocaleTimeString());
+    const labels = data.map(d => {
+        const date = new Date(d.timestamp);
+        return date.toLocaleTimeString() + '\n' + date.toLocaleDateString();
+    });
     const txData = data.map(d => d.tx_bytes);
     const rxData = data.map(d => d.rx_bytes);
+    
+    // Calculate statistics
+    const peakTx = Math.max(...txData);
+    const peakRx = Math.max(...rxData);
+    const avgTx = txData.reduce((a, b) => a + b, 0) / txData.length;
+    const avgRx = rxData.reduce((a, b) => a + b, 0) / rxData.length;
+    
+    // Update chart info
+    document.getElementById('chartProcessName').textContent = processName || 'All Processes';
+    document.getElementById('chartPeakTx').textContent = formatBytes(peakTx) + '/s';
+    document.getElementById('chartPeakRx').textContent = formatBytes(peakRx) + '/s';
+    document.getElementById('chartAvgTx').textContent = formatBytes(avgTx) + '/s';
+    document.getElementById('chartAvgRx').textContent = formatBytes(avgRx) + '/s';
     
     // Destroy existing chart
     if (bandwidthChart) {
@@ -364,7 +445,9 @@ function renderBandwidthChart(data) {
                     borderColor: 'rgb(239, 68, 68)',
                     backgroundColor: 'rgba(239, 68, 68, 0.1)',
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 },
                 {
                     label: 'Download (RX)',
@@ -372,41 +455,68 @@ function renderBandwidthChart(data) {
                     borderColor: 'rgb(16, 185, 129)',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
             plugins: {
+                title: {
+                    display: true,
+                    text: 'Bandwidth Usage Over Time',
+                    color: '#f1f5f9',
+                    font: {
+                        size: 16
+                    }
+                },
                 legend: {
                     labels: {
-                        color: '#f1f5f9'
+                        color: '#f1f5f9',
+                        font: {
+                            size: 12
+                        }
                     }
                 },
                 tooltip: {
                     callbacks: {
+                        title: function(context) {
+                            const label = context[0].label.split('\n');
+                            return label.join(' ');
+                        },
                         label: function(context) {
-                            return context.dataset.label + ': ' + formatBytes(context.parsed.y);
+                            return context.dataset.label + ': ' + formatBytes(context.parsed.y) + '/s';
                         }
-                    }
+                    },
+                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    borderColor: 'rgba(51, 65, 85, 0.5)',
+                    borderWidth: 1
                 }
             },
             scales: {
                 x: {
                     ticks: {
-                        color: '#cbd5e1'
+                        color: '#cbd5e1',
+                        maxRotation: 45,
+                        minRotation: 0
                     },
                     grid: {
                         color: 'rgba(71, 85, 105, 0.3)'
                     }
                 },
                 y: {
+                    beginAtZero: true,
                     ticks: {
                         color: '#cbd5e1',
                         callback: function(value) {
-                            return formatBytes(value);
+                            return formatBytes(value) + '/s';
                         }
                     },
                     grid: {

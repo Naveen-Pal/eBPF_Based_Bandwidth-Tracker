@@ -235,30 +235,30 @@ class BandwidthTracker:
                     stats[process_key]['tcp_rx'] += bytes_count
                 else:
                     stats[process_key]['udp_rx'] += bytes_count
-        
+        bandwidth_map.clear()
         return dict(stats)
     
     def print_stats(self, stats):
         """Print statistics in a formatted table"""
-        print("\n" + "="*120)
-        print(f"{'PID':<8} {'Process':<20} {'TX (Total)':<15} {'RX (Total)':<15} {'TCP TX':<12} {'TCP RX':<12} {'UDP TX':<12} {'UDP RX':<12}")
-        print("="*120)
+        print("\n" + "="*130)
+        print(f"{'PID':<8} {'Process':<20} {'TX (Total)':<15} {'RX (Total)':<15} {'TCP TX':<12} {'TCP RX':<12} {'UDP TX':<12} {'UDP RX':<12} {'Remote IPs':<20}")
+        print("="*130)
         
         # Sort by total bandwidth (TX + RX)
         sorted_stats = sorted(stats.items(), 
                             key=lambda x: x[1]['tx_bytes'] + x[1]['rx_bytes'], 
                             reverse=True)
-        
         for process_key, data in sorted_stats[:20]:  # Top 20
+            remote_ips_str = '|'.join(data['remote_ips'].keys()) if data['remote_ips'] else 'N/A'
             print(f"{data['pid']:<8} {data['comm']:<20} "
                   f"{self.format_bytes(data['tx_bytes']):<15} "
                   f"{self.format_bytes(data['rx_bytes']):<15} "
                   f"{self.format_bytes(data['tcp_tx']):<12} "
                   f"{self.format_bytes(data['tcp_rx']):<12} "
                   f"{self.format_bytes(data['udp_tx']):<12} "
-                  f"{self.format_bytes(data['udp_rx']):<12}")
-        
-        print("="*120)
+                  f"{self.format_bytes(data['udp_rx']):<12} "
+                  f"{remote_ips_str:<20}")
+        print("="*130)
     
     def run(self, interval=1, web_mode=False):
         """Main loop to collect and display bandwidth statistics"""
@@ -275,41 +275,59 @@ class BandwidthTracker:
             while self.running:
                 time.sleep(interval)
                 
-                # Get current stats
+                # Get current stats (these are deltas since last clear due to map.clear())
                 current_stats = self.get_current_stats()
                 
-                # Calculate delta (bandwidth rate)
+                # Calculate delta for display
                 delta_stats = {}
                 for key, current in current_stats.items():
-                    if key in last_stats:
-                        last = last_stats[key]
-                        delta_stats[key] = {
-                            'pid': current['pid'],
-                            'comm': current['comm'],
-                            'tx_bytes': (current['tx_bytes'] - last['tx_bytes']) / interval,
-                            'rx_bytes': (current['rx_bytes'] - last['rx_bytes']) / interval,
-                            'tcp_tx': (current['tcp_tx'] - last['tcp_tx']) / interval,
-                            'tcp_rx': (current['tcp_rx'] - last['tcp_rx']) / interval,
-                            'udp_tx': (current['udp_tx'] - last['udp_tx']) / interval,
-                            'udp_rx': (current['udp_rx'] - last['udp_rx']) / interval,
-                            'tx_packets': current['tx_packets'] - last['tx_packets'],
-                            'rx_packets': current['rx_packets'] - last['rx_packets'],
-                            'remote_ips': current['remote_ips']
-                        }
-                    else:
-                        delta_stats[key] = current
+                    # Since we clear the map, current_stats already contains deltas
+                    # Calculate rate per second for display
+                    delta_stats[key] = {
+                        'pid': current['pid'],
+                        'comm': current['comm'],
+                        'tx_bytes': current['tx_bytes'] / interval,
+                        'rx_bytes': current['rx_bytes'] / interval,
+                        'tcp_tx': current['tcp_tx'] / interval,
+                        'tcp_rx': current['tcp_rx'] / interval,
+                        'udp_tx': current['udp_tx'] / interval,
+                        'udp_rx': current['udp_rx'] / interval,
+                        'tx_packets': current['tx_packets'],
+                        'rx_packets': current['rx_packets'],
+                        'remote_ips': current['remote_ips']
+                    }
                 
-                # Store in database
+                # Store DELTAS in database (not accumulated values)
                 timestamp = datetime.now()
                 for key, data in current_stats.items():
-                    self.storage.insert_bandwidth_record(
-                        timestamp=timestamp,
-                        pid=data['pid'],
-                        process_name=data['comm'],
-                        tx_bytes=data['tx_bytes'],
-                        rx_bytes=data['rx_bytes'],
-                        protocol='TOTAL'
-                    )
+                    # Only store if there was actual traffic
+                    if data['tx_bytes'] > 0 or data['rx_bytes'] > 0:
+                        # Store per-IP records with deltas
+                        for remote_ip, ip_data in data['remote_ips'].items():
+                            if ip_data['tx'] > 0 or ip_data['rx'] > 0:
+                                # Determine dominant protocol for this IP
+                                # Store TCP record if there's TCP traffic
+                                if data['tcp_tx'] > 0 or data['tcp_rx'] > 0:
+                                    self.storage.insert_bandwidth_record(
+                                        timestamp=timestamp,
+                                        pid=data['pid'],
+                                        process_name=data['comm'],
+                                        tx_bytes=ip_data['tx'],
+                                        rx_bytes=ip_data['rx'],
+                                        protocol='TCP',
+                                        remote_ip=remote_ip
+                                    )
+                                # Store UDP record if there's UDP traffic
+                                if data['udp_tx'] > 0 or data['udp_rx'] > 0:
+                                    self.storage.insert_bandwidth_record(
+                                        timestamp=timestamp,
+                                        pid=data['pid'],
+                                        process_name=data['comm'],
+                                        tx_bytes=ip_data['tx'],
+                                        rx_bytes=ip_data['rx'],
+                                        protocol='UDP',
+                                        remote_ip=remote_ip
+                                    )
                 
                 # Print to console if not in web mode
                 if not web_mode:

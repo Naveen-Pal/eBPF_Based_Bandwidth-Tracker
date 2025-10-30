@@ -312,6 +312,83 @@ tbody tr:hover {
     border-radius: 10px;
     margin-bottom: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    height: 500px;
+}
+
+.chart-controls-top {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    flex-wrap: wrap;
+}
+
+.chart-controls-top .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 150px;
+}
+
+.chart-controls-top .control-group label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.chart-controls-top select {
+    padding: 8px 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 5px;
+    background: var(--dark-bg);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.chart-controls-top select:hover {
+    border-color: var(--primary-color);
+}
+
+.chart-controls-top select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.chart-info {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    background: var(--card-bg);
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    flex-wrap: wrap;
+}
+
+.chart-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 120px;
+}
+
+.chart-stat .stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.chart-stat .stat-value {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    font-weight: 600;
 }
 
 .chart-controls {

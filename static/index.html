@@ -37,25 +37,26 @@
                 <div class="card-icon">📊</div>
                 <div class="card-content">
                     <div class="card-value" id="totalBandwidth">0 B</div>
-                    <div class="card-label">Total Bandwidth</div>
+                    <div class="card-label">Total Current Bandwidth</div>
                 </div>
             </div>
             <div class="card">
                 <div class="card-icon">⬆️</div>
                 <div class="card-content">
                     <div class="card-value" id="totalTx">0 B</div>
-                    <div class="card-label">Total Upload</div>
+                    <div class="card-label">Total Upload Bandwidth</div>
                 </div>
             </div>
             <div class="card">
                 <div class="card-icon">⬇️</div>
                 <div class="card-content">
                     <div class="card-value" id="totalRx">0 B</div>
-                    <div class="card-label">Total Download</div>
+                    <div class="card-label">Total Download Bandwidth</div>
                 </div>
             </div>
             <div class="card">
-                <div class="card-icon">📱</div>
+                <div class="card-icon">💬</div>
+                <!-- 📱 -->
                 <div class="card-content">
                     <div class="card-value" id="processCount">0</div>
                     <div class="card-label">Active Processes</div>
@@ -111,9 +112,9 @@
                         <tr>
                             <th>#</th>
                             <th>Process</th>
-                            <th>Upload (TX)</th>
-                            <th>Download (RX)</th>
-                            <th>Total Bandwidth</th>
+                            <th>Avg. Upload (TX)</th>
+                            <th>Avg. Download (RX)</th>
+                            <th>Avg. Bandwidth</th>
                             <th>Records</th>
                         </tr>
                     </thead>
@@ -147,7 +148,6 @@
                         <tr>
                             <th>#</th>
                             <th>Remote IP</th>
-                            <th>Process</th>
                             <th>Upload (TX)</th>
                             <th>Download (RX)</th>
                             <th>Total</th>
@@ -165,13 +165,58 @@
         <!-- Charts Tab -->
         <div id="charts" class="tab-content">
             <h2>Bandwidth Over Time</h2>
+            <div class="chart-controls-top">
+                <div class="control-group">
+                    <label>Select Process:</label>
+                    <select id="chartProcessFilter">
+                        <option value="">All Processes (Combined)</option>
+                    </select>
+                </div>
+                <!-- <div class="control-group">
+                    <label>Time Range:</label>
+                    <select id="chartTimeRange">
+                        <option value="1">Last Hour</option>
+                        <option value="6">Last 6 Hours</option>
+                        <option value="24">Last 24 Hours</option>
+                        <option value="168">Last Week</option>
+                    </select>
+                </div> -->
+                <div class="control-group">
+                    <label>Interval:</label>
+                    <select id="chartInterval">
+                        <option value="1" selected>1 minute</option>
+                        <option value="5">5 minutes</option>
+                        <option value="10">10 minutes</option>
+                        <option value="30">30 minutes</option>
+                        <option value="60">1 hour</option>
+                    </select>
+                </div>
+                <button id="updateChartBtn" class="btn btn-primary">📊 Update Chart</button>
+            </div>
+            <div class="chart-info">
+                <div class="chart-stat">
+                    <span class="stat-label">Showing:</span>
+                    <span class="stat-value" id="chartProcessName">All Processes</span>
+                </div>
+                <div class="chart-stat">
+                    <span class="stat-label">Peak Upload:</span>
+                    <span class="stat-value" id="chartPeakTx">0 B/s</span>
+                </div>
+                <div class="chart-stat">
+                    <span class="stat-label">Peak Download:</span>
+                    <span class="stat-value" id="chartPeakRx">0 B/s</span>
+                </div>
+                <div class="chart-stat">
+                    <span class="stat-label">Avg Upload:</span>
+                    <span class="stat-value" id="chartAvgTx">0 B/s</span>
+                </div>
+                <div class="chart-stat">
+                    <span class="stat-label">Avg Download:</span>
+                    <span class="stat-value" id="chartAvgRx">0 B/s</span>
+                </div>
+            </div>
             <div class="chart-container">
                 <canvas id="bandwidthChart"></canvas>
-            </div>
-            <div class="chart-controls">
-                <label>Process Filter:</label>
-                <input type="text" id="chartProcessFilter" placeholder="Leave empty for all processes">
-                <button id="updateChartBtn" class="btn btn-primary">Update Chart</button>
             </div>
         </div>
 
