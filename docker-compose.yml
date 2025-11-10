@@ -1,0 +1,35 @@
+# version: '3.8'
+
+# services:
+#   ebpf-tracker:
+#     build: .
+#     container_name: bandwidth-tracker
+#     privileged: true
+#     network_mode: host
+#     pid: host
+#     volumes:
+#       - /sys/kernel/debug:/sys/kernel/debug:ro
+#       - /lib/modules:/lib/modules:ro
+#       - /usr/src:/usr/src:ro
+#       - ./bandwidth.db:/app/bandwidth.db
+#     cap_add:
+#       - SYS_ADMIN
+#       - NET_ADMIN
+#       - BPF
+#     security_opt:
+#       - apparmor:unconfined
+#     restart: unless-stoppedversion: '3.8'
+
+version: '3.8'
+
+services:
+  ebpf-tracker:
+    build: .
+    container_name: bandwidth-tracker
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./bandwidth.db:/app/bandwidth.db
+    environment:
+      - MODE=userspace
+    restart: unless-stopped

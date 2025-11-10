@@ -17,7 +17,7 @@ The tracker attaches to four kernel functions:
 
 ```c
 - tcp_sendmsg()   // Captures TCP send operations
-- tcp_recvmsg()   // Captures TCP receive operations  
+- tcp_recvmsg()   // Captures TCP receive operations
 - udp_sendmsg()   // Captures UDP send operations
 - udp_recvmsg()   // Captures UDP receive operations
 ```

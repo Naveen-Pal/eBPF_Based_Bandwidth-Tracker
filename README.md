@@ -89,37 +89,8 @@ pip3 install -r requirements.txt
 ### Start the Tracker
 
 ```bash
-# Run with web UI (requires root)
-sudo python3 ebpf_tracker.py --web
-
-# Run with CLI only
-sudo python3 cli.py --live
-
-# View historical data
-sudo python3 cli.py --history --top 10
-```
-
-### Access Web UI
-
-Open your browser and navigate to:
-```
-http://localhost:8080
-```
-
-### CLI Commands
-
-```bash
-# Show real-time bandwidth (top 10 processes)
-sudo python3 cli.py --live --top 10
-
-# Show statistics for specific protocol
-sudo python3 cli.py --live --protocol tcp
-
-# Show historical data for last hour
-sudo python3 cli.py --history --hours 1
-
-# Show per-IP breakdown for a process
-sudo python3 cli.py --process-name firefox --breakdown
+make run # command line version
+make run-web # web version
 ```
 
 ## How It Works
@@ -155,28 +126,6 @@ sudo python3 cli.py --process-name firefox --breakdown
 - Requires root privileges to load eBPF programs
 - Only tracks local processes (not forwarded traffic)
 - Data is stored locally in SQLite
-
-## Troubleshooting
-
-### Permission Denied
-Make sure you're running with sudo/root privileges.
-
-### Kernel Version
-Check your kernel version supports eBPF:
-```bash
-uname -r
-```
-Minimum required: 4.15
-
-### BCC Not Found
-Install BCC tools:
-```bash
-sudo apt-get install bpfcc-tools python3-bpfcc
-```
-
-## Contributing
-
-Feel free to submit issues and enhancement requests!
 
 ## License
 

@@ -184,11 +184,11 @@ class BandwidthTracker:
     
     def format_bytes(self, bytes):
         """Format bytes to human-readable format"""
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        for unit in ['B', 'KiB', 'MiB', 'GiB', 'TiB']:
             if bytes < 1024.0:
                 return f"{bytes:.2f} {unit}"
             bytes /= 1024.0
-        return f"{bytes:.2f} PB"
+        return f"{bytes:.2f} PiB"
     
     def get_current_stats(self):
         """Get current bandwidth statistics from eBPF maps"""
@@ -366,7 +366,7 @@ def main():
         web_thread.daemon = True
         web_thread.start()
         
-        print(f"Web server started at http://localhost:8080")
+        # print(f"Web server started at http://localhost:8080")
     
     tracker.run(interval=args.interval, web_mode=args.web)
 

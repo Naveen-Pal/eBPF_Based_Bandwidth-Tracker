@@ -19,11 +19,11 @@ storage_instance = None
 
 def format_bytes(bytes):
     """Format bytes to human-readable format"""
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+    for unit in ['B', 'KiB', 'MiB', 'GiB', 'TiB']:
         if bytes < 1024.0:
             return f"{bytes:.2f} {unit}"
         bytes /= 1024.0
-    return f"{bytes:.2f} PB"
+    return f"{bytes:.2f} PiB"
 
 @app.route('/')
 def index():
