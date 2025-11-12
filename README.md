@@ -77,12 +77,24 @@ pip3 install -r requirements.txt
 
 ## Installation
 
-1. Clone the repository
-2. Install system dependencies (see above)
-3. Install Python dependencies:
+### System Installation
+
    ```bash
-   pip3 install -r requirements.txt
+   make install # It does all the instalation process :)
    ```
+### Docker
+
+Build and run with docker-compose:
+
+```bash
+sudo docker-compose build
+
+```
+
+Notes:
+- The service requires privileged access and host kernel headers/modules (see docker-compose.yml mounts: /lib/modules, /usr/src, /sys/kernel/debug).
+- If you see kernel-header or modprobe errors, install kernel headers on the host or run the tracker on the host directly.
+- Use docker-compose logs -f ebpf-tracker to view runtime errors.
 
 ## Usage
 
@@ -90,9 +102,18 @@ pip3 install -r requirements.txt
 
 ```bash
 make run # command line version
-make run-web # web version
+```
+or
+```bash
+make run-web # web version (better)
 ```
 
+### Docker
+
+```bash 
+# run (runs in privileged mode and uses host network)
+sudo docker-compose up -d # by default web version
+```
 ## How It Works
 
 1. **eBPF Hooks**: The program attaches eBPF probes to kernel functions:
@@ -120,6 +141,7 @@ make run-web # web version
 - **Minimal overhead**: eBPF runs in kernel space with minimal performance impact
 - **Efficient aggregation**: Data is aggregated in kernel space before moving to user space
 - **Scalable**: Can handle high-traffic systems
+
 
 ## Security Considerations
 

@@ -80,7 +80,6 @@ echo ""
 echo "Step 3: Installing Python packages..."
 pip3 install --upgrade pip
 pip3 install -r requirements.txt
-pip3 install tabulate  # For CLI pretty printing
 
 echo "✓ Python packages installed"
 
@@ -100,30 +99,16 @@ fi
 
 # Check if BPF filesystem is mounted
 if mount | grep -q bpf; then
-    echo "✓ BPF filesystem is mounted"
+    echo "BPF filesystem is mounted"
 else
-    echo "⚠ Warning: BPF filesystem not mounted"
+    echo "Warning: BPF filesystem not mounted"
     echo "  Mounting BPF filesystem..."
     mount -t bpf bpf /sys/fs/bpf/
 fi
 
-# Create database directory
-echo ""
-echo "Step 5: Setting up database..."
-mkdir -p data
-echo "✓ Database directory created"
-
-# Make scripts executable
-echo ""
-echo "Step 6: Setting permissions..."
-chmod +x ebpf_tracker.py
-chmod +x cli.py
-chmod +x install.sh
-echo "✓ Scripts made executable"
-
-# # Create systemd service (optional)
+# # Create systemd service
 # echo ""
-# echo "Step 7: Creating systemd service (optional)..."
+# echo "Creating systemd service (optional)..."
 
 # cat > /etc/systemd/system/ebpf-bandwidth-tracker.service << EOF
 # [Unit]
@@ -148,22 +133,5 @@ echo "✓ Scripts made executable"
 
 # Installation complete
 echo ""
-echo "========================================"
-echo "Installation Complete! ✓"
-echo "========================================"
-echo ""
-echo "Quick Start:"
-echo "  1. Start the tracker with web UI:"
-echo "     sudo python3 ebpf_tracker.py --web"
-echo ""
-echo "  2. Access the web interface:"
-echo "     http://localhost:8080"
-echo ""
-echo "  3. Or use the CLI:"
-echo "     sudo python3 cli.py --live"
-echo ""
-echo "  4. View historical data:"
-echo "     sudo python3 cli.py --history --hours 24"
-echo ""
-echo "For more information, see README.md"
+echo "Installation Complete!"
 echo ""

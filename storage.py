@@ -53,39 +53,7 @@ class BandwidthStorage:
             CREATE INDEX IF NOT EXISTS idx_remote_ip 
         ON bandwidth_records(remote_ip)
         """)
-        
-        # # Per-IP tracking table
-        # cursor.execute("""
-        #     CREATE TABLE IF NOT EXISTS ip_bandwidth (
-        #         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        #         timestamp DATETIME NOT NULL,
-        #         pid INTEGER NOT NULL,
-        #         process_name TEXT NOT NULL,
-        #         remote_ip TEXT NOT NULL,
-        #         tx_bytes INTEGER NOT NULL,
-        #         rx_bytes INTEGER NOT NULL,
-        #         protocol TEXT NOT NULL,
-        #         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        #     )
-        # """)
-        
-        # Aggregated statistics table (for faster queries)
-        # cursor.execute("""
-        #     CREATE TABLE IF NOT EXISTS hourly_stats (
-        #         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        #         hour_start DATETIME NOT NULL,
-        #         process_name TEXT NOT NULL,
-        #         total_tx_bytes INTEGER NOT NULL,
-        #         total_rx_bytes INTEGER NOT NULL,
-        #         tcp_tx_bytes INTEGER NOT NULL,
-        #         tcp_rx_bytes INTEGER NOT NULL,
-        #         udp_tx_bytes INTEGER NOT NULL,
-        #         udp_rx_bytes INTEGER NOT NULL,
-        #         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        #         UNIQUE(hour_start, process_name)
-        #     )
-        # """)
-        
+                
         self.conn.commit()
         cursor.close()
     

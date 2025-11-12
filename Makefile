@@ -7,7 +7,6 @@ help:
 	@echo "  make install    - Install all dependencies"
 	@echo "  make run        - Run tracker (CLI mode)"
 	@echo "  make run-web    - Run tracker with web UI"
-	@echo "  make cli        - Open interactive CLI"
 	@echo "  make clean      - Clean up temporary files"
 	@echo "  make deps       - Install Python dependencies"
 	@echo "  make check      - Check system requirements"
@@ -23,24 +22,12 @@ deps:
 
 run:
 	@echo "Starting bandwidth tracker (CLI mode)..."
-	@sudo ./venv/bin/python3 ebpf_tracker.py --interval 1
+	@sudo ./venv/bin/python3 ebpf_tracker.py --interval 5
 
 run-web:
 	@echo "Starting bandwidth tracker with web UI..."
 	@echo "Access at: http://localhost:8080"
 	@sudo ./venv/bin/python3 ebpf_tracker.py --web
-
-cli:
-	@sudo ./venv/bin/python3 cli.py --live --interval 2
-
-cli-history:
-	@sudo ./venv/bin/python3 cli.py --history --hours 24 --top 20
-
-cli-protocol:
-	@sudo ./venv/bin/python3 cli.py --protocol-breakdown --hours 1
-
-cli-ips:
-	@sudo ./venv/bin/python3 cli.py --ip-breakdown --hours 1
 
 check:
 	@echo "Checking system requirements..."
